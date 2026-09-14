@@ -1,0 +1,23 @@
+# configuração real do usuário — nunca versionar (pode conter caminhos/segredos locais)
+config.local.yaml
+config.yaml
+*.local.yaml
+
+# logs e estado em runtime
+logs/
+*.log
+wakeful.db
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# editor/os
+.vscode/
+.idea/
+Thumbs.db

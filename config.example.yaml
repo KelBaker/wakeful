@@ -1,0 +1,23 @@
+# Copie este arquivo para config.yaml (ou config.local.yaml) e ajuste.
+# config.yaml NUNCA deve ir pro git — veja .gitignore.
+
+logging:
+  dir: logs
+  level: INFO
+
+tasks:
+  - name: backup-diario
+    # python (ou qualquer executável) + args, igual você digitaria no terminal
+    command: ["python", "tasks/example_backup.py"]
+    # cron padrão (minuto hora dia mes dia-da-semana), como no crontab do Linux
+    cron: "0 3 * * *"
+    timeout_seconds: 1800
+    retries: 1
+    working_dir: "."
+
+  - name: relatorio-a-cada-hora
+    command: ["python", "tasks/example_report.py", "--verbose"]
+    cron: "0 * * * *"
+    timeout_seconds: 300
+    retries: 0
+    working_dir: "."
