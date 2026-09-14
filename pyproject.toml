@@ -29,4 +29,4 @@ build-backend = "setuptools.build_meta"
 include = ["wakeful*"]
 
 [tool.setuptools.package-data]
-wakeful = ["web/static/*"]
+wakeful = ["web/static/*", "web/static/fonts/*"]
