@@ -43,12 +43,30 @@ def main() -> None:
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
 
-    webview.create_window("wakeful", f"http://{HOST}:{PORT}", width=900, height=700, min_size=(600, 400))
-    webview.start()
+    window = webview.create_window(
+        "wakeful", f"http://{HOST}:{PORT}", width=980, height=680, min_size=(640, 420),
+        transparent=True,  # deixa o fundo da webview transparente pro Mica/Acrylic aparecer atras
+    )
+    webview.start(_apply_windows_acrylic, window)
 
     # janela fechada -> encerra scheduler e servidor junto
     runtime.shutdown()
     server.should_exit = True
+
+
+def _apply_windows_acrylic(window) -> None:
+    """Aplica o efeito Mica/Acrylic nativo do Windows na janela, se disponivel.
+
+    So funciona no Windows 10/11 com a lib pywinstyles instalada -- em outro
+    SO (ou se a lib nao estiver presente) cai silenciosamente pro fundo solido
+    definido no CSS, sem quebrar o app.
+    """
+    try:
+        import pywinstyles
+
+        pywinstyles.apply_style(window, "mica")
+    except Exception:
+        logger.info("Efeito Mica/Acrylic indisponivel (fora do Windows ou lib ausente) -- usando fundo solido.")
 
 
 if __name__ == "__main__":

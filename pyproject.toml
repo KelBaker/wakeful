@@ -12,6 +12,7 @@ dependencies = [
     "fastapi>=0.116",
     "uvicorn>=0.30",
     "pywebview>=5.0",
+    "pywinstyles>=1.8; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
@@ -29,4 +30,4 @@ build-backend = "setuptools.build_meta"
 include = ["wakeful*"]
 
 [tool.setuptools.package-data]
-wakeful = ["web/static/*", "web/static/fonts/*"]
+wakeful = ["web/static/*"]
