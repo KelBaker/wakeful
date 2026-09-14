@@ -5,8 +5,8 @@
   <title>wakeful</title>
   <style>
     @font-face {
-      font-family: "Archivo Black";
-      src: url("fonts/ArchivoBlack-Regular.ttf") format("truetype");
+      font-family: "Bebas Neue";
+      src: url("fonts/BebasNeue-Regular.ttf") format("truetype");
       font-weight: 400;
       font-display: swap;
     }
@@ -47,20 +47,11 @@
     }
     /* ---- wordmark: letreiro de LED âmbar, letras espaçadas com leve brilho ---- */
     .wordmark {
-      font-family: "Archivo Black", "Cascadia Code", sans-serif;
-      font-size: 46px;
+      font-family: "Bebas Neue", "Cascadia Code", sans-serif;
+      font-size: 32px;
       font-weight: 400;
-      letter-spacing: -.01em;
-      line-height: 1;
-      /* preenchimento com gradiente + textura de linhas por dentro da letra,
-         em vez de sombra atras -- a profundidade fica no miolo do tipo */
-      background:
-        repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0px, rgba(0,0,0,.35) 1px, transparent 1px, transparent 3px),
-        radial-gradient(130% 200% at 25% 15%, #fff3c4 0%, #ffb400 38%, #a85f00 72%, #3d2400 100%);
-      background-blend-mode: multiply;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      letter-spacing: .04em;
+      color: var(--amber);
     }
     header .clock {
       font-size: 15px;
