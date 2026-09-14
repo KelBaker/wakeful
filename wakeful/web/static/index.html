@@ -107,6 +107,45 @@
 
     /* ---- lista de tarefas: cartoes translucidos estilo Fluent ---- */
     .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ---- pagina de configuracoes ---- */
+    .settings-row {
+      background: var(--panel);
+      backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 8px;
+    }
+    .settings-label { font-size: 14px; font-weight: 600; }
+    .settings-hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .settings-error { color: var(--fail); font-size: 12.5px; margin-top: 10px; }
+
+    .toggle {
+      width: 40px; height: 22px;
+      border-radius: 999px;
+      border: none;
+      background: #c6c6c6;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .toggle[aria-checked="true"] { background: var(--accent); }
+    .toggle-knob {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,.3);
+      transition: left .15s;
+    }
+    .toggle[aria-checked="true"] .toggle-knob { left: 21px; }
     .task-card {
       background: var(--panel);
       backdrop-filter: blur(20px) saturate(150%);
@@ -281,21 +320,55 @@
 <body>
   <div class="shell">
     <nav class="rail">
-      <div class="rail-item active" title="Tarefas">☰</div>
-      <div class="rail-item" title="Configurações (em breve)">⚙</div>
+      <div class="rail-item active" data-view="tasks" title="Tarefas">☰</div>
+      <div class="rail-item" data-view="settings" title="Configurações">⚙</div>
     </nav>
 
     <div class="content">
-      <div class="page-header">
-        <div class="page-title">
-          <h1>Tarefas agendadas</h1>
-          <span class="clock" id="clock">--:--:--</span>
+      <div id="view-tasks">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Tarefas agendadas</h1>
+            <span class="clock" id="clock">--:--:--</span>
+          </div>
+          <button id="btn-new" class="btn-primary">+ Nova tarefa</button>
         </div>
-        <button id="btn-new" class="btn-primary">+ Nova tarefa</button>
+
+        <div class="task-list" id="tasks"></div>
+        <p id="empty" class="empty" style="display:none">Nenhuma tarefa cadastrada ainda. Clique em "+ Nova tarefa" pra começar.</p>
       </div>
 
-      <div class="task-list" id="tasks"></div>
-      <p id="empty" class="empty" style="display:none">Nenhuma tarefa cadastrada ainda. Clique em "+ Nova tarefa" pra começar.</p>
+      <div id="view-settings" style="display:none">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Configurações</h1>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Iniciar automaticamente com o Windows</div>
+            <div class="settings-hint">Adiciona o wakeful na pasta Startup do usuário — abre sozinho ao ligar o PC.</div>
+          </div>
+          <button id="toggle-autostart" class="toggle" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Pasta de logs</div>
+            <div class="settings-hint" id="settings-logging-dir">—</div>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Arquivo de configuração</div>
+            <div class="settings-hint" id="settings-config-path">—</div>
+          </div>
+        </div>
+
+        <p id="settings-error" class="settings-error" style="display:none"></p>
+      </div>
     </div>
   </div>
 
@@ -633,6 +706,56 @@
       }
       closeModal();
       loadTasks();
+    };
+
+    // ---- navegacao entre "Tarefas" e "Configuracoes" ----
+    document.querySelectorAll(".rail-item").forEach((item) => {
+      item.onclick = () => {
+        document.querySelectorAll(".rail-item").forEach((i) => i.classList.remove("active"));
+        item.classList.add("active");
+        const view = item.dataset.view;
+        document.getElementById("view-tasks").style.display = view === "tasks" ? "block" : "none";
+        document.getElementById("view-settings").style.display = view === "settings" ? "block" : "none";
+        if (view === "settings") loadSettings();
+      };
+    });
+
+    async function loadSettings() {
+      const errorEl = document.getElementById("settings-error");
+      errorEl.style.display = "none";
+      try {
+        const res = await fetch("/api/settings");
+        const data = await res.json();
+        document.getElementById("toggle-autostart").setAttribute("aria-checked", String(data.autostart));
+        document.getElementById("settings-logging-dir").textContent = data.logging_dir;
+        document.getElementById("settings-config-path").textContent = data.config_path;
+      } catch {
+        errorEl.textContent = "Não foi possível carregar as configurações.";
+        errorEl.style.display = "block";
+      }
+    }
+
+    document.getElementById("toggle-autostart").onclick = async (e) => {
+      const btn = e.currentTarget;
+      const errorEl = document.getElementById("settings-error");
+      errorEl.style.display = "none";
+      const next = btn.getAttribute("aria-checked") !== "true";
+      try {
+        const res = await fetch("/api/settings/autostart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: next }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || "Falha ao atualizar");
+        }
+        const data = await res.json();
+        btn.setAttribute("aria-checked", String(data.autostart));
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = "block";
+      }
     };
 
     updateRecurrenceFields();

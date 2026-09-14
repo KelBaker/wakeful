@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from wakeful import autostart
 from wakeful.config import TaskConfig
 from wakeful.executor import run_task
 from wakeful.runtime import Runtime
@@ -25,6 +26,10 @@ class TaskIn(BaseModel):
     timeout_seconds: int = 600
     retries: int = 0
     working_dir: str = "."
+
+
+class AutostartIn(BaseModel):
+    enabled: bool
 
 
 def create_app(runtime: Runtime) -> FastAPI:
@@ -78,6 +83,29 @@ def create_app(runtime: Runtime) -> FastAPI:
         all_lines = today_log.read_text(encoding="utf-8", errors="replace").splitlines()
         relevant = [ln for ln in all_lines if f"'{name}'" in ln or f"[{name}]" in ln]
         return {"lines": relevant[-lines:]}
+
+    @app.get("/api/settings")
+    def get_settings():
+        try:
+            autostart_enabled = autostart.is_enabled()
+        except RuntimeError:
+            autostart_enabled = False  # fora do Windows (ex: dev/teste) -- opcao fica indisponivel
+        return {
+            "autostart": autostart_enabled,
+            "logging_dir": runtime.config.logging.dir,
+            "config_path": str(runtime.config_path),
+        }
+
+    @app.post("/api/settings/autostart")
+    def set_autostart(body: AutostartIn):
+        try:
+            if body.enabled:
+                autostart.enable()
+            else:
+                autostart.disable()
+        except (RuntimeError, FileNotFoundError) as exc:
+            raise HTTPException(400, str(exc))
+        return {"autostart": autostart.is_enabled()}
 
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 

@@ -20,6 +20,8 @@ dev = ["pytest>=8.0", "httpx2"]
 
 [project.scripts]
 wakeful = "wakeful.__main__:main"
+
+[project.gui-scripts]
 wakeful-ui = "wakeful.app_window:main"
 
 [build-system]
