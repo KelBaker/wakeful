@@ -205,6 +205,35 @@
     .field input::placeholder { color: #4a462f; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+    .field select {
+      width: 100%;
+      background: var(--black);
+      border: none;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--warm-white);
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 6px 2px;
+    }
+    .field select:focus { outline: none; border-bottom-color: var(--amber); }
+
+    .weekday-toggle { display: flex; gap: 4px; flex-wrap: wrap; }
+    .weekday-btn {
+      background: transparent;
+      border: 1px solid var(--hairline);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 11.5px;
+      padding: 6px 0;
+      width: 40px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .weekday-btn:hover { border-color: var(--amber-dim); }
+    .weekday-btn.on { border-color: var(--amber); color: var(--amber); background: rgba(255,180,0,.08); }
+
+    .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
     .ticket-actions { display: flex; justify-content: flex-end; gap: 18px; margin-top: 22px; }
     .link-btn {
       background: none; border: none; cursor: pointer;
@@ -261,9 +290,50 @@
           <input name="command" required placeholder="python tasks/example_backup.py" />
         </div>
         <div class="field">
-          <label>cron (min hora dia mês dia-semana)</label>
-          <input name="cron" required placeholder="0 3 * * *" />
+          <label>recorrência</label>
+          <select name="recurrence_type" id="recurrence_type">
+            <option value="diaria">diariamente</option>
+            <option value="semanal">semanalmente</option>
+            <option value="mensal">mensalmente</option>
+            <option value="personalizado">personalizado (cron)</option>
+          </select>
         </div>
+
+        <div class="field-row" id="field-time">
+          <div class="field">
+            <label>hora</label>
+            <input name="rec_hour" type="number" min="0" max="23" value="3" />
+          </div>
+          <div class="field">
+            <label>minuto</label>
+            <input name="rec_minute" type="number" min="0" max="59" value="0" />
+          </div>
+        </div>
+
+        <div class="field" id="field-weekdays" style="display:none">
+          <label>dias da semana</label>
+          <div class="weekday-toggle">
+            <button type="button" class="weekday-btn" data-day="mon">seg</button>
+            <button type="button" class="weekday-btn" data-day="tue">ter</button>
+            <button type="button" class="weekday-btn" data-day="wed">qua</button>
+            <button type="button" class="weekday-btn" data-day="thu">qui</button>
+            <button type="button" class="weekday-btn" data-day="fri">sex</button>
+            <button type="button" class="weekday-btn" data-day="sat">sáb</button>
+            <button type="button" class="weekday-btn" data-day="sun">dom</button>
+          </div>
+        </div>
+
+        <div class="field" id="field-monthday" style="display:none">
+          <label>dia do mês</label>
+          <input name="rec_day" type="number" min="1" max="31" value="1" />
+        </div>
+
+        <div class="field" id="field-cron" style="display:none">
+          <label>cron (min hora dia mês dia-semana)</label>
+          <input name="cron" placeholder="0 3 * * *" />
+          <div class="hint">pra qualquer horário/combinação que os campos acima não cobrem</div>
+        </div>
+
         <div class="field-row">
           <div class="field">
             <label>timeout (s)</label>
@@ -306,6 +376,90 @@
     };
 
     let editingName = null;
+    let selectedWeekdays = new Set();
+
+    const WEEKDAY_LABEL = { mon: "seg", tue: "ter", wed: "qua", thu: "qui", fri: "sex", sat: "sáb", sun: "dom" };
+
+    function updateRecurrenceFields() {
+      const type = document.getElementById("recurrence_type").value;
+      document.getElementById("field-time").style.display = type === "personalizado" ? "none" : "grid";
+      document.getElementById("field-weekdays").style.display = type === "semanal" ? "block" : "none";
+      document.getElementById("field-monthday").style.display = type === "mensal" ? "block" : "none";
+      document.getElementById("field-cron").style.display = type === "personalizado" ? "block" : "none";
+      document.getElementById("form").cron.required = type === "personalizado";
+    }
+
+    document.getElementById("recurrence_type").onchange = updateRecurrenceFields;
+
+    document.querySelectorAll(".weekday-btn").forEach((btn) => {
+      btn.onclick = () => {
+        const day = btn.dataset.day;
+        if (selectedWeekdays.has(day)) {
+          selectedWeekdays.delete(day);
+          btn.classList.remove("on");
+        } else {
+          selectedWeekdays.add(day);
+          btn.classList.add("on");
+        }
+      };
+    });
+
+    function buildCron(form) {
+      const type = form.recurrence_type.value;
+      const hour = form.rec_hour.value || "0";
+      const minute = form.rec_minute.value || "0";
+
+      if (type === "diaria") return `${minute} ${hour} * * *`;
+      if (type === "semanal") {
+        const days = selectedWeekdays.size ? [...selectedWeekdays].join(",") : "*";
+        return `${minute} ${hour} * * ${days}`;
+      }
+      if (type === "mensal") return `${minute} ${hour} ${form.rec_day.value || "1"} * *`;
+      return form.cron.value.trim(); // personalizado
+    }
+
+    // tenta reconhecer o cron salvo e preencher os campos amigaveis de volta;
+    // se nao reconhecer um padrao simples, cai pra "personalizado" com o cron cru
+    function applyCronToForm(form, cron) {
+      const parts = cron.trim().split(/\s+/);
+      selectedWeekdays.clear();
+      document.querySelectorAll(".weekday-btn").forEach((b) => b.classList.remove("on"));
+
+      if (parts.length === 5) {
+        const [min, hour, day, month, dow] = parts;
+        if (day === "*" && month === "*" && dow === "*" && /^\d+$/.test(min) && /^\d+$/.test(hour)) {
+          form.recurrence_type.value = "diaria";
+          form.rec_hour.value = hour;
+          form.rec_minute.value = min;
+          updateRecurrenceFields();
+          return;
+        }
+        if (day === "*" && month === "*" && dow !== "*" && /^\d+$/.test(min) && /^\d+$/.test(hour)) {
+          form.recurrence_type.value = "semanal";
+          form.rec_hour.value = hour;
+          form.rec_minute.value = min;
+          dow.split(",").forEach((d) => {
+            selectedWeekdays.add(d);
+            const btn = document.querySelector(`.weekday-btn[data-day="${d}"]`);
+            if (btn) btn.classList.add("on");
+          });
+          updateRecurrenceFields();
+          return;
+        }
+        if (/^\d+$/.test(day) && month === "*" && dow === "*" && /^\d+$/.test(min) && /^\d+$/.test(hour)) {
+          form.recurrence_type.value = "mensal";
+          form.rec_hour.value = hour;
+          form.rec_minute.value = min;
+          form.rec_day.value = day;
+          updateRecurrenceFields();
+          return;
+        }
+      }
+
+      form.recurrence_type.value = "personalizado";
+      form.cron.value = cron;
+      updateRecurrenceFields();
+    }
 
     function tickClock() {
       document.getElementById("clock").textContent =
@@ -380,16 +534,21 @@
       document.getElementById("modal-title").textContent = task ? "editar tarefa" : "nova tarefa";
       const form = document.getElementById("form");
       form.reset();
+      selectedWeekdays.clear();
+      document.querySelectorAll(".weekday-btn").forEach((b) => b.classList.remove("on"));
+
       if (task) {
         form.name.value = task.name;
         form.name.disabled = true;
         form.command.value = task.command.join(" ");
-        form.cron.value = task.cron;
+        applyCronToForm(form, task.cron);
         form.timeout_seconds.value = task.timeout_seconds;
         form.retries.value = task.retries;
         form.working_dir.value = task.working_dir;
       } else {
         form.name.disabled = false;
+        form.recurrence_type.value = "diaria";
+        updateRecurrenceFields();
       }
       document.getElementById("modal").classList.remove("hidden");
     }
@@ -405,10 +564,15 @@
     document.getElementById("form").onsubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
+      const cron = buildCron(form);
+      if (!cron || cron.split(/\s+/).length !== 5) {
+        alert("Cron inválido — precisa ter 5 campos (min hora dia mês dia-semana).");
+        return;
+      }
       const payload = {
         name: form.name.value.trim(),
         command: form.command.value.trim().split(/\s+/),
-        cron: form.cron.value.trim(),
+        cron,
         timeout_seconds: Number(form.timeout_seconds.value),
         retries: Number(form.retries.value),
         working_dir: form.working_dir.value.trim() || ".",
@@ -429,6 +593,7 @@
       loadTasks();
     };
 
+    updateRecurrenceFields();
     loadTasks();
     setInterval(loadTasks, 5000);
   </script>
