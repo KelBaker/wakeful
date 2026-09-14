@@ -73,3 +73,24 @@ def load_config(path: str | Path) -> AppConfig:
 def _require(task_dict: dict, key: str, index: int) -> None:
     if key not in task_dict:
         raise ValueError(f"Tarefa #{index} no config está sem o campo obrigatório '{key}'")
+
+
+def save_config(config: AppConfig, path: str | Path) -> None:
+    """Persiste o AppConfig de volta pro YAML — usado pela UI ao criar/editar tarefa."""
+    raw = {
+        "logging": {"dir": config.logging.dir, "level": config.logging.level},
+        "tasks": [
+            {
+                "name": t.name,
+                "command": t.command,
+                "cron": t.cron,
+                "timeout_seconds": t.timeout_seconds,
+                "retries": t.retries,
+                "working_dir": t.working_dir,
+            }
+            for t in config.tasks
+        ],
+    }
+    Path(path).write_text(
+        yaml.safe_dump(raw, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )

@@ -9,13 +9,17 @@ authors = [{ name = "Kelvin Henrique" }]
 dependencies = [
     "APScheduler>=3.10,<4",
     "PyYAML>=6.0",
+    "fastapi>=0.116",
+    "uvicorn>=0.30",
+    "pywebview>=5.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "httpx2"]
 
 [project.scripts]
 wakeful = "wakeful.__main__:main"
+wakeful-ui = "wakeful.app_window:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -23,3 +27,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["wakeful*"]
+
+[tool.setuptools.package-data]
+wakeful = ["web/static/*"]

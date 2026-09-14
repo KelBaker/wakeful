@@ -6,6 +6,7 @@ import subprocess
 import time
 
 from wakeful.config import TaskConfig
+from wakeful.state import state_store
 
 logger = logging.getLogger("wakeful.executor")
 
@@ -13,6 +14,7 @@ logger = logging.getLogger("wakeful.executor")
 def run_task(task: TaskConfig) -> bool:
     """Roda a tarefa (com retries). Retorna True se terminou com sucesso."""
     attempts = task.retries + 1
+    state_store.start(task.name)
 
     for attempt in range(1, attempts + 1):
         logger.info("Iniciando '%s' (tentativa %d/%d)", task.name, attempt, attempts)
@@ -35,6 +37,7 @@ def run_task(task: TaskConfig) -> bool:
         except OSError as exc:
             # comando não encontrado, permissão negada etc — não adianta tentar de novo
             logger.error("'%s' falhou ao iniciar: %s", task.name, exc)
+            state_store.finish(task.name, success=False)
             return False
 
         elapsed = time.monotonic() - start
@@ -46,6 +49,7 @@ def run_task(task: TaskConfig) -> bool:
 
         if result.returncode == 0:
             logger.info("'%s' concluída em %.1fs (exit 0)", task.name, elapsed)
+            state_store.finish(task.name, success=True)
             return True
 
         logger.error(
@@ -54,4 +58,5 @@ def run_task(task: TaskConfig) -> bool:
         )
 
     logger.error("'%s' falhou em todas as %d tentativa(s)", task.name, attempts)
+    state_store.finish(task.name, success=False)
     return False
