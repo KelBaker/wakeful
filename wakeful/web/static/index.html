@@ -3,95 +3,253 @@
 <head>
   <meta charset="utf-8" />
   <title>wakeful</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    :root {
+      --bg: #0a0a0c;
+      --panel: #16161a;
+      --panel-2: #1e1e23;
+      --border: #2a2a30;
+      --text: #f2f2f3;
+      --muted: #8b8b94;
+      --accent: #6366f1;
+      --accent-hover: #7c7ff2;
+      --ok-bg: rgba(16, 185, 129, .15);
+      --ok-fg: #34d399;
+      --err-bg: rgba(239, 68, 68, .15);
+      --err-fg: #f87171;
+      --warn-bg: rgba(245, 158, 11, .15);
+      --warn-fg: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
     ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .wrap { max-width: 880px; margin: 0 auto; padding: 28px 24px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand .icon { font-size: 26px; }
+    .brand h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -.02em; }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+    .btn-ghost:hover { color: var(--text); }
+
+    .icon-btn {
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .icon-btn:hover { background: var(--panel-2); color: var(--text); }
+    .icon-btn.danger:hover { color: var(--err-fg); }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      margin-top: 60px;
+    }
+
+    .task-list { display: flex; flex-direction: column; gap: 10px; }
+    .task-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .task-info { min-width: 0; flex: 1; }
+    .task-title-row { display: flex; align-items: center; gap: 10px; }
+    .task-name { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge.sucesso { background: var(--ok-bg); color: var(--ok-fg); }
+    .badge.falha { background: var(--err-bg); color: var(--err-fg); }
+    .badge.rodando { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge.nunca-rodou { background: var(--panel-2); color: var(--muted); }
+
+    .task-command {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: Consolas, monospace;
+    }
+    .task-meta { font-size: 12px; color: #6b6b74; margin-top: 5px; }
+    .task-meta code {
+      background: var(--panel-2);
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-family: Consolas, monospace;
+    }
+
+    .task-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 420px;
+    }
+    .modal h2 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .field input {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 9px 11px;
+      font-size: 13.5px;
+      font-family: inherit;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+    .log-modal { max-width: 640px; display: flex; flex-direction: column; max-height: 80vh; }
+    .log-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .log-content {
+      background: #000;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      font-family: Consolas, monospace;
+      overflow: auto;
+      white-space: pre-wrap;
+      flex: 1;
+      color: #ccc;
+    }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen">
-
-  <div class="max-w-5xl mx-auto p-6">
-    <header class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">⏰</span>
-        <h1 class="text-xl font-semibold">wakeful</h1>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <span class="icon">⏰</span>
+        <h1>wakeful</h1>
       </div>
-      <button id="btn-new" class="bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-4 py-2 text-sm font-medium">
-        + Nova tarefa
-      </button>
+      <button id="btn-new" class="btn-primary">+ Nova tarefa</button>
     </header>
 
-    <div id="tasks" class="grid gap-3"></div>
-    <p id="empty" class="hidden text-zinc-500 text-sm mt-8 text-center">
+    <div id="tasks" class="task-list"></div>
+    <p id="empty" class="empty" style="display:none">
       Nenhuma tarefa cadastrada ainda. Clique em "Nova tarefa" pra começar.
     </p>
   </div>
 
   <!-- modal criar/editar -->
-  <div id="modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md">
-      <h2 id="modal-title" class="text-lg font-semibold mb-4">Nova tarefa</h2>
-      <form id="form" class="space-y-3">
-        <div>
-          <label class="text-xs text-zinc-400">Nome</label>
-          <input name="name" required class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+  <div id="modal" class="overlay hidden">
+    <div class="modal">
+      <h2 id="modal-title">Nova tarefa</h2>
+      <form id="form">
+        <div class="field">
+          <label>Nome</label>
+          <input name="name" required />
         </div>
-        <div>
-          <label class="text-xs text-zinc-400">Comando (separado por espaço)</label>
-          <input name="command" required placeholder="python tasks/example_backup.py"
-                 class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+        <div class="field">
+          <label>Comando (separado por espaço)</label>
+          <input name="command" required placeholder="python tasks/example_backup.py" />
         </div>
-        <div>
-          <label class="text-xs text-zinc-400">Cron (min hora dia mês dia-semana)</label>
-          <input name="cron" required placeholder="0 3 * * *"
-                 class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+        <div class="field">
+          <label>Cron (min hora dia mês dia-semana)</label>
+          <input name="cron" required placeholder="0 3 * * *" />
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs text-zinc-400">Timeout (s)</label>
-            <input name="timeout_seconds" type="number" value="600"
-                   class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+        <div class="field-row">
+          <div class="field">
+            <label>Timeout (s)</label>
+            <input name="timeout_seconds" type="number" value="600" />
           </div>
-          <div>
-            <label class="text-xs text-zinc-400">Retries</label>
-            <input name="retries" type="number" value="0"
-                   class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+          <div class="field">
+            <label>Retries</label>
+            <input name="retries" type="number" value="0" />
           </div>
         </div>
-        <div>
-          <label class="text-xs text-zinc-400">Working dir</label>
-          <input name="working_dir" value="."
-                 class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm" />
+        <div class="field">
+          <label>Working dir</label>
+          <input name="working_dir" value="." />
         </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" id="btn-cancel" class="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200">Cancelar</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-4 py-2 text-sm font-medium">Salvar</button>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel" class="btn-ghost">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- modal log -->
-  <div id="log-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
-      <div class="flex items-center justify-between mb-3">
-        <h2 id="log-title" class="text-lg font-semibold">Log</h2>
-        <button id="btn-close-log" class="text-zinc-400 hover:text-zinc-200">✕</button>
+  <div id="log-modal" class="overlay hidden">
+    <div class="modal log-modal">
+      <div class="log-modal-header">
+        <h2 id="log-title" style="margin:0">Log</h2>
+        <button id="btn-close-log" class="icon-btn">✕</button>
       </div>
-      <pre id="log-content" class="bg-black rounded-lg p-3 text-xs overflow-auto flex-1 whitespace-pre-wrap"></pre>
+      <pre id="log-content" class="log-content"></pre>
     </div>
   </div>
 
   <script>
-    const statusColors = {
-      "sucesso": "bg-emerald-500/15 text-emerald-400",
-      "falha": "bg-red-500/15 text-red-400",
-      "rodando": "bg-amber-500/15 text-amber-400",
-      "nunca-rodou": "bg-zinc-500/15 text-zinc-400",
-    };
-
     let editingName = null;
 
     async function loadTasks() {
@@ -100,28 +258,28 @@
       const container = document.getElementById("tasks");
       const empty = document.getElementById("empty");
       container.innerHTML = "";
-      empty.classList.toggle("hidden", tasks.length > 0);
+      empty.style.display = tasks.length > 0 ? "none" : "block";
 
       for (const t of tasks) {
         const el = document.createElement("div");
-        el.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-4";
+        el.className = "task-card";
         el.innerHTML = `
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-medium truncate">${t.name}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full ${statusColors[t.status]}">${t.status}</span>
+          <div class="task-info">
+            <div class="task-title-row">
+              <span class="task-name">${t.name}</span>
+              <span class="badge ${t.status}">${t.status}</span>
             </div>
-            <div class="text-xs text-zinc-500 mt-1 truncate">${t.command.join(" ")}</div>
-            <div class="text-xs text-zinc-600 mt-1">
+            <div class="task-command">${t.command.join(" ")}</div>
+            <div class="task-meta">
               cron: <code>${t.cron}</code>
               ${t.next_run ? ` · próxima: ${new Date(t.next_run).toLocaleString()}` : ""}
             </div>
           </div>
-          <div class="flex items-center gap-1 shrink-0">
-            <button data-action="run" class="text-xs px-2 py-1.5 rounded-lg hover:bg-zinc-800" title="Rodar agora">▶</button>
-            <button data-action="log" class="text-xs px-2 py-1.5 rounded-lg hover:bg-zinc-800" title="Ver log">📄</button>
-            <button data-action="edit" class="text-xs px-2 py-1.5 rounded-lg hover:bg-zinc-800" title="Editar">✎</button>
-            <button data-action="delete" class="text-xs px-2 py-1.5 rounded-lg hover:bg-zinc-800 hover:text-red-400" title="Apagar">🗑</button>
+          <div class="task-actions">
+            <button data-action="run" class="icon-btn" title="Rodar agora">▶</button>
+            <button data-action="log" class="icon-btn" title="Ver log">📄</button>
+            <button data-action="edit" class="icon-btn" title="Editar">✎</button>
+            <button data-action="delete" class="icon-btn danger" title="Apagar">🗑</button>
           </div>
         `;
         el.querySelector('[data-action="run"]').onclick = () => runTask(t.name);
