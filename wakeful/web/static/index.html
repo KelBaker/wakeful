@@ -39,11 +39,34 @@
       padding-bottom: 14px;
       margin-bottom: 4px;
     }
-    header .title {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: .04em;
+    /* ---- wordmark: cada letra é uma aba de split-flap, com a costura ao meio ---- */
+    .wordmark {
+      display: flex;
+      gap: 3px;
+    }
+    .flap {
+      position: relative;
+      width: 22px;
+      height: 28px;
+      background: linear-gradient(var(--row), #0e0f08);
+      border: 1px solid var(--amber-dim);
       color: var(--amber);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+      box-shadow: 0 1px 0 rgba(255,180,0,.08) inset;
+    }
+    .flap::after {
+      /* a linha horizontal ao meio, a "dobra" mecânica do painel */
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 1px;
+      background: var(--black);
+      transform: translateY(-.5px);
     }
     header .clock {
       font-size: 15px;
@@ -225,7 +248,7 @@
 <body>
   <div class="wrap">
     <header>
-      <span class="title">wakeful</span>
+      <span class="wordmark" id="wordmark"></span>
       <span class="clock" id="clock">--:--:--</span>
     </header>
 
@@ -305,6 +328,11 @@
     }
     tickClock();
     setInterval(tickClock, 1000);
+
+    document.getElementById("wordmark").innerHTML = "wakeful"
+      .split("")
+      .map((ch) => `<span class="flap">${ch}</span>`)
+      .join("");
 
     async function loadTasks() {
       const res = await fetch("/api/tasks");
