@@ -5,135 +5,153 @@
   <title>wakeful</title>
   <style>
     :root {
-      --bg: #0a0a0c;
-      --panel: #16161a;
-      --panel-2: #1e1e23;
-      --border: #2a2a30;
-      --text: #f2f2f3;
-      --muted: #8b8b94;
-      --accent: #6366f1;
-      --accent-hover: #7c7ff2;
-      --ok-bg: rgba(16, 185, 129, .15);
-      --ok-fg: #34d399;
-      --err-bg: rgba(239, 68, 68, .15);
-      --err-fg: #f87171;
-      --warn-bg: rgba(245, 158, 11, .15);
-      --warn-fg: #fbbf24;
+      --black: #0b0c08;
+      --row: #131409;
+      --row-hover: #191a10;
+      --hairline: #262712;
+      --amber: #ffb400;
+      --amber-dim: #7a5a12;
+      --warm-white: #f4ead1;
+      --muted: #8c866c;
+      --ok: #4ade80;
+      --fail: #ef5350;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      height: 100%;
+      background: var(--black);
+      color: var(--warm-white);
+      font-family: "Cascadia Code", "Cascadia Mono", Consolas, "SF Mono", ui-monospace, monospace;
+      -webkit-font-smoothing: antialiased;
     }
     ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); }
 
-    .wrap { max-width: 880px; margin: 0 auto; padding: 28px 24px; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 32px 24px 60px; }
 
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand .icon { font-size: 26px; }
-    .brand h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -.02em; }
+    /* ---- header: barra de status tipo painel de aeroporto ---- */
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 14px;
+      margin-bottom: 4px;
+    }
+    header .title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--amber);
+    }
+    header .clock {
+      font-size: 15px;
+      color: var(--amber-dim);
+      font-variant-numeric: tabular-nums;
+    }
 
-    button {
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 14px 0 18px;
+    }
+    .btn-add {
+      background: none;
+      border: 1px solid var(--amber-dim);
+      color: var(--amber);
       font-family: inherit;
-      cursor: pointer;
-      border: none;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background .15s;
-    }
-    .btn-primary:hover { background: var(--accent-hover); }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
       font-size: 13px;
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
     }
-    .btn-ghost:hover { color: var(--text); }
+    .btn-add:hover { border-color: var(--amber); background: rgba(255,180,0,.06); }
 
-    .icon-btn {
-      background: transparent;
-      color: var(--muted);
-      font-size: 14px;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s, color .15s;
-    }
-    .icon-btn:hover { background: var(--panel-2); color: var(--text); }
-    .icon-btn.danger:hover { color: var(--err-fg); }
-
-    .empty {
-      color: var(--muted);
-      font-size: 14px;
-      text-align: center;
-      margin-top: 60px;
-    }
-
-    .task-list { display: flex; flex-direction: column; gap: 10px; }
-    .task-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 18px;
+    /* ---- board: lista de tarefas ---- */
+    .board { border-top: 1px solid var(--hairline); }
+    .row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 20px;
+      padding: 14px 4px;
+      border-bottom: 1px solid var(--hairline);
+      transition: background .1s;
     }
-    .task-info { min-width: 0; flex: 1; }
-    .task-title-row { display: flex; align-items: center; gap: 10px; }
-    .task-name { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .badge.sucesso { background: var(--ok-bg); color: var(--ok-fg); }
-    .badge.falha { background: var(--err-bg); color: var(--err-fg); }
-    .badge.rodando { background: var(--warn-bg); color: var(--warn-fg); }
-    .badge.nunca-rodou { background: var(--panel-2); color: var(--muted); }
+    .row:hover { background: var(--row-hover); }
 
-    .task-command {
-      font-size: 12.5px;
-      color: var(--muted);
-      margin-top: 5px;
+    .row-main { min-width: 0; flex: 1; overflow: hidden; }
+    .row-line1 { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+
+    .dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--muted);
+    }
+    .dot.sucesso { background: var(--ok); box-shadow: 0 0 6px rgba(74,222,128,.6); }
+    .dot.falha { background: var(--fail); box-shadow: 0 0 6px rgba(239,83,80,.6); }
+    .dot.rodando { background: var(--amber); box-shadow: 0 0 6px rgba(255,180,0,.7); }
+    .dot.nunca-rodou { background: var(--muted); }
+
+    .row-name {
+      font-size: 15px;
+      font-weight: 700;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-family: Consolas, monospace;
+      min-width: 0;
     }
-    .task-meta { font-size: 12px; color: #6b6b74; margin-top: 5px; }
-    .task-meta code {
-      background: var(--panel-2);
-      padding: 1px 6px;
-      border-radius: 5px;
-      font-family: Consolas, monospace;
+    .row-status-text { font-size: 11.5px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+
+    .row-command {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .task-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .row-when {
+      text-align: right;
+      flex-shrink: 0;
+      width: 150px;
+      font-size: 12.5px;
+      color: var(--amber-dim);
+      line-height: 1.5;
+      white-space: nowrap;
+    }
+    .row-when .cron { color: var(--amber); font-weight: 700; }
 
+    .row-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .icon-btn:hover { color: var(--amber); }
+    .icon-btn.danger:hover { color: var(--fail); }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13.5px;
+      text-align: center;
+      padding: 50px 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    /* ---- overlay / modal ---- */
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .55);
+      background: rgba(0,0,0,.7);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -141,98 +159,120 @@
     }
     .overlay.hidden { display: none; }
 
-    .modal {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
+    .ticket {
+      background: var(--row);
+      border: 1px solid var(--amber-dim);
+      padding: 26px;
       width: 100%;
       max-width: 420px;
     }
-    .modal h2 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+    .ticket h2 {
+      font-size: 15px;
+      color: var(--amber);
+      letter-spacing: .04em;
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--hairline);
+    }
 
-    .field { margin-bottom: 12px; }
-    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      letter-spacing: .03em;
+    }
     .field input {
       width: 100%;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 9px;
-      padding: 9px 11px;
-      font-size: 13.5px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--warm-white);
       font-family: inherit;
+      font-size: 13.5px;
+      padding: 6px 2px;
     }
-    .field input:focus { outline: none; border-color: var(--accent); }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field input:focus { outline: none; border-bottom-color: var(--amber); }
+    .field input::placeholder { color: #4a462f; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    .ticket-actions { display: flex; justify-content: flex-end; gap: 18px; margin-top: 22px; }
+    .link-btn {
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; font-size: 13px;
+    }
+    .link-btn.cancel { color: var(--muted); }
+    .link-btn.cancel:hover { color: var(--warm-white); }
+    .link-btn.save { color: var(--black); background: var(--amber); padding: 7px 16px; font-weight: 700; }
+    .link-btn.save:hover { background: #ffc633; }
 
-    .log-modal { max-width: 640px; display: flex; flex-direction: column; max-height: 80vh; }
-    .log-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .log-content {
+    .log-ticket { max-width: 640px; max-height: 78vh; display: flex; flex-direction: column; }
+    .log-ticket .head { display: flex; justify-content: space-between; align-items: baseline; }
+    .log-body {
       background: #000;
-      border-radius: 10px;
+      border: 1px solid var(--hairline);
       padding: 12px;
       font-size: 12px;
-      font-family: Consolas, monospace;
       overflow: auto;
       white-space: pre-wrap;
+      color: #a8a290;
       flex: 1;
-      color: #ccc;
+      margin-top: 14px;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand">
-        <span class="icon">⏰</span>
-        <h1>wakeful</h1>
-      </div>
-      <button id="btn-new" class="btn-primary">+ Nova tarefa</button>
+      <span class="title">wakeful</span>
+      <span class="clock" id="clock">--:--:--</span>
     </header>
 
-    <div id="tasks" class="task-list"></div>
-    <p id="empty" class="empty" style="display:none">
-      Nenhuma tarefa cadastrada ainda. Clique em "Nova tarefa" pra começar.
-    </p>
+    <div class="toolbar">
+      <button id="btn-new" class="btn-add">+ nova tarefa</button>
+    </div>
+
+    <div class="board" id="board">
+      <div id="tasks"></div>
+      <p id="empty" class="empty" style="display:none">nenhuma tarefa cadastrada — clique em "+ nova tarefa"</p>
+    </div>
   </div>
 
   <!-- modal criar/editar -->
   <div id="modal" class="overlay hidden">
-    <div class="modal">
-      <h2 id="modal-title">Nova tarefa</h2>
+    <div class="ticket">
+      <h2 id="modal-title">nova tarefa</h2>
       <form id="form">
         <div class="field">
-          <label>Nome</label>
+          <label>nome</label>
           <input name="name" required />
         </div>
         <div class="field">
-          <label>Comando (separado por espaço)</label>
+          <label>comando (separado por espaço)</label>
           <input name="command" required placeholder="python tasks/example_backup.py" />
         </div>
         <div class="field">
-          <label>Cron (min hora dia mês dia-semana)</label>
+          <label>cron (min hora dia mês dia-semana)</label>
           <input name="cron" required placeholder="0 3 * * *" />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Timeout (s)</label>
+            <label>timeout (s)</label>
             <input name="timeout_seconds" type="number" value="600" />
           </div>
           <div class="field">
-            <label>Retries</label>
+            <label>retries</label>
             <input name="retries" type="number" value="0" />
           </div>
         </div>
         <div class="field">
-          <label>Working dir</label>
+          <label>working dir</label>
           <input name="working_dir" value="." />
         </div>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancel" class="btn-ghost">Cancelar</button>
-          <button type="submit" class="btn-primary">Salvar</button>
+        <div class="ticket-actions">
+          <button type="button" id="btn-cancel" class="link-btn cancel">cancelar</button>
+          <button type="submit" class="link-btn save">salvar</button>
         </div>
       </form>
     </div>
@@ -240,17 +280,31 @@
 
   <!-- modal log -->
   <div id="log-modal" class="overlay hidden">
-    <div class="modal log-modal">
-      <div class="log-modal-header">
-        <h2 id="log-title" style="margin:0">Log</h2>
+    <div class="ticket log-ticket">
+      <div class="head">
+        <h2 id="log-title" style="border:none; margin:0; padding:0">log</h2>
         <button id="btn-close-log" class="icon-btn">✕</button>
       </div>
-      <pre id="log-content" class="log-content"></pre>
+      <pre id="log-content" class="log-body"></pre>
     </div>
   </div>
 
   <script>
+    const statusLabel = {
+      sucesso: "sucesso",
+      falha: "falha",
+      rodando: "rodando",
+      "nunca-rodou": "nunca rodou",
+    };
+
     let editingName = null;
+
+    function tickClock() {
+      document.getElementById("clock").textContent =
+        new Date().toLocaleTimeString("pt-BR", { hour12: false });
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
 
     async function loadTasks() {
       const res = await fetch("/api/tasks");
@@ -262,24 +316,28 @@
 
       for (const t of tasks) {
         const el = document.createElement("div");
-        el.className = "task-card";
+        el.className = "row";
+        const nextRun = t.next_run
+          ? new Date(t.next_run).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+          : "—";
         el.innerHTML = `
-          <div class="task-info">
-            <div class="task-title-row">
-              <span class="task-name">${t.name}</span>
-              <span class="badge ${t.status}">${t.status}</span>
+          <div class="row-main">
+            <div class="row-line1">
+              <span class="dot ${t.status}"></span>
+              <span class="row-name">${t.name}</span>
+              <span class="row-status-text">${statusLabel[t.status]}</span>
             </div>
-            <div class="task-command">${t.command.join(" ")}</div>
-            <div class="task-meta">
-              cron: <code>${t.cron}</code>
-              ${t.next_run ? ` · próxima: ${new Date(t.next_run).toLocaleString()}` : ""}
-            </div>
+            <div class="row-command">${t.command.join(" ")}</div>
           </div>
-          <div class="task-actions">
+          <div class="row-when">
+            <div class="cron">${t.cron}</div>
+            <div>próxima ${nextRun}</div>
+          </div>
+          <div class="row-actions">
             <button data-action="run" class="icon-btn" title="Rodar agora">▶</button>
-            <button data-action="log" class="icon-btn" title="Ver log">📄</button>
+            <button data-action="log" class="icon-btn" title="Ver log">▤</button>
             <button data-action="edit" class="icon-btn" title="Editar">✎</button>
-            <button data-action="delete" class="icon-btn danger" title="Apagar">🗑</button>
+            <button data-action="delete" class="icon-btn danger" title="Apagar">✕</button>
           </div>
         `;
         el.querySelector('[data-action="run"]').onclick = () => runTask(t.name);
@@ -304,14 +362,14 @@
     async function showLog(name) {
       const res = await fetch(`/api/tasks/${encodeURIComponent(name)}/log`);
       const data = await res.json();
-      document.getElementById("log-title").textContent = `Log — ${name}`;
+      document.getElementById("log-title").textContent = `log — ${name}`;
       document.getElementById("log-content").textContent = data.lines.join("\n") || "(sem execuções hoje)";
       document.getElementById("log-modal").classList.remove("hidden");
     }
 
     function openModal(task) {
       editingName = task ? task.name : null;
-      document.getElementById("modal-title").textContent = task ? "Editar tarefa" : "Nova tarefa";
+      document.getElementById("modal-title").textContent = task ? "editar tarefa" : "nova tarefa";
       const form = document.getElementById("form");
       form.reset();
       if (task) {
